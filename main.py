@@ -26,12 +26,15 @@ displayGrid.pack()
 
 # cell used in grid display only, state is bool, True -> alive, False -> dead
 class DisplayCell(tk.Frame):
+    # possible fix: def __init__(self, master, ...)
+    # then super().__init__(master=master)
     def __init__(self, x: int, y: int, state):
         super().__init__()
         self.x = x
         self.y = y
         self.state = state
-
+        
+        # used to set the state to dead by default
         if self.state is None:
             self.state = False
 
