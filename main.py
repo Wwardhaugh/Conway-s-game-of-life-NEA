@@ -2,12 +2,13 @@
 
 import tkinter as tk
 
+
 # endregion
 
 # region globals
 
 # width of the grid that is displayed, the real grid has unlimited size
-GridWidth = 40  # note that higher values tend to lead to lag when resizing
+GridWidth = 20  # note that higher values tend to lead to lag when resizing
 
 # colour customization of the cells
 AliveCol = "black"
@@ -26,6 +27,7 @@ class MainWindow(tk.Tk):
         self.title("test")
         self.geometry("500x500")
         self.configure(bg="gray")
+        # self.attributes("-fullscreen", True)
 
 
 # cell used in grid display only, state is bool, True -> alive, False -> dead
@@ -84,13 +86,21 @@ for X in range(GridWidth):
 
 # speed slider used for the simulation speed
 SimSpeed = tk.DoubleVar()
-speedScale = tk.Scale(master=window, orient=tk.HORIZONTAL, label="speed", variable=SimSpeed, from_=1, to=100)
+speedScale = tk.Scale(master=window, orient=tk.HORIZONTAL, label="speed", variable=SimSpeed, from_=0, to=100)
 
 # places the slider underneath the grid
 speedScale.place(in_=displayGrid, relx=0.4, rely=1, y=50)
 
-# time control widget to contain the start, stop, and step forward buttons
-timeControl = tk.Frame()
+# time control widgets to contain the start, stop, and step forward buttons
+timeControl = tk.Frame(width=100, height=5, )
+timeControl.rowconfigure(0)
+timeControl.columnconfigure(3)
+timeControl.place(in_=displayGrid, relx=0.5, rely=0, y=-50)
+
+
+stepForward = tk.Button(master=timeControl, width=4, height=2, image=tk.PhotoImage(file="stepForward.png"))
+stepForward.grid(row=0, column=0)
+
 
 
 # endregion
