@@ -1,7 +1,5 @@
 # region imports
-
 import tkinter as tk
-
 
 # endregion
 
@@ -27,7 +25,7 @@ class MainWindow(tk.Tk):
         self.title("test")
         self.geometry("500x500")
         self.configure(bg="gray")
-        # self.attributes("-fullscreen", True)
+        self.state("zoomed")
 
 
 # cell used in grid display only, state is bool, True -> alive, False -> dead
@@ -49,7 +47,7 @@ class DisplayCell(tk.Frame):
             self.configure(bg=DeadCol)
 
         # set cell size relative to the grid width
-        self.configure(width=400/GridWidth, height=400/GridWidth)
+        self.configure(width=400 / GridWidth, height=400 / GridWidth)
 
         # set the position in the displayGrid widget
         self.grid(row=self.x, column=self.y)
@@ -81,8 +79,7 @@ displayCells = []
 for X in range(GridWidth):
     displayCells.append([])
     for Y in range(GridWidth):
-        displayCells[X].append(DisplayCell(X, Y, ((X+Y) % 2 == 0), displayGrid))
-
+        displayCells[X].append(DisplayCell(X, Y, ((X + Y) % 2 == 0), displayGrid))
 
 # speed slider used for the simulation speed
 SimSpeed = tk.DoubleVar()
@@ -95,12 +92,22 @@ speedScale.place(in_=displayGrid, relx=0.4, rely=1, y=50)
 timeControl = tk.Frame(width=100, height=5, )
 timeControl.rowconfigure(0)
 timeControl.columnconfigure(3)
-timeControl.place(in_=displayGrid, relx=0.5, rely=0, y=-50)
+timeControl.place(in_=displayGrid, relx=0.35, rely=0, y=-50)
+
+# Images
+stepImg = tk.PhotoImage(file="stepForward.png")
+playImg = tk.PhotoImage(file="play.png")
+pauseImg = tk.PhotoImage(file="pause.png")
 
 
-stepForward = tk.Button(master=timeControl, width=4, height=2, image=tk.PhotoImage(file="stepForward.png"))
-stepForward.grid(row=0, column=0)
+# step forward button to update one generation at a time
+tk.Button(master=timeControl, image=stepImg).grid(row=0, column=2)
 
+# play button for starting the simulation
+tk.Button(master=timeControl, image=playImg).grid(row=0, column=0)
+
+# pause button for stopping the simulation
+tk.Button(master=timeControl, image=pauseImg).grid(row=0, column=1)
 
 
 # endregion
