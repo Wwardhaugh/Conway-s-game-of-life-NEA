@@ -15,7 +15,6 @@ DeadCol = "white"
 
 # endregion
 
-
 # region classes
 
 # main window
@@ -59,9 +58,14 @@ class DisplayCell(tk.Frame):
         else:
             self.configure(bg=DeadCol)
 
+# cell class used for the main rule algorithm and calculations
+class SimCell:
+    def __init__(self, x: int, y: int, nextState: bool):
+        pass
+
+
 
 # endregion
-
 
 # region instantiation and widgets
 
@@ -108,6 +112,16 @@ tk.Button(master=timeControl, image=playImg).grid(row=0, column=0)
 
 # pause button for stopping the simulation
 tk.Button(master=timeControl, image=pauseImg).grid(row=0, column=1)
+
+
+# endregion
+
+
+# region functions
+
+# updates the displayed version of the grid
+def update_display(grid):
+    pass
 
 
 # endregion
