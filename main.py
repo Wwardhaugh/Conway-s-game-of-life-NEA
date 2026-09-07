@@ -36,7 +36,7 @@ class MainWindow(tk.Tk):
 
 
 # cell used in grid display only, state is bool, True -> alive, False -> dead
-class DisplayCell(tk.Frame):
+class DisplayCell(tk.Button):
     def __init__(self, x: int, y: int, state: bool, master):
         super().__init__(master=master)
         self.x = x
@@ -65,6 +65,11 @@ class DisplayCell(tk.Frame):
             self.configure(bg=AliveCol)
         else:
             self.configure(bg=DeadCol)
+
+    # switches the state of the cell
+    def flip_state(self):
+        self.state = not self.state
+        self.update_colour()
 
 
 # cell class used for the main rule algorithm and calculations
@@ -115,10 +120,6 @@ class SimCell:
         if live_neighbours > DeathByOverpop:
             self.nextState = False
 
-        # debug
-        # if self.x == 1 and self.y == 1:
-        #    print(f"live neighbours:{live_neighbours}, dead neighbours: {dead_neighbours}")
-        #    print(f"state:{self.nextState}")
 
         # return dead neighbour positions found
         return dead_neighbours_pos
@@ -275,45 +276,12 @@ tk.Button(master=timeControl, image=pauseImg).grid(row=0, column=1)
 # endregion
 
 
-
-
-# test
-#sim_cells = []
-#for i in range(3):
-#    sim_cells.append(SimCell(i, 0, True))
-#for cell in sim_cells:
-#    print(cell.x, cell.y)
-#sim_cells = tick_rules(sim_cells)
-#print("sim")
-#
-#for cell in sim_cells:
-#    print(cell.x, cell.y)
-
-#sim_cells = tick_rules(sim_cells)
-#print("sim")
-
-#for cell in sim_cells:
-#    print(cell.x, cell.y)
-
-
-# more testing
-#def get_grid(event):
-#    print("enter pressed")
-#    for cell in SimCells:
-#        print(cell.x, cell.y)
-
-
-#for i in range(3):
-#    SimCells.append(SimCell(i, 0, True))
-
 # glider
 SimCells.append(SimCell(0, 0, True))
 SimCells.append(SimCell(1, 0, True))
 SimCells.append(SimCell(2, 0, True))
 SimCells.append(SimCell(2, -1, True))
 SimCells.append(SimCell(1, -2, True))
-
-#window.bind("<Return>", get_grid)
 
 
 # main loop for the simulation
