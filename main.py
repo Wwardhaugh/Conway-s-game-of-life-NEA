@@ -6,7 +6,7 @@ import tkinter as tk
 # region globals
 
 # width of the grid that is displayed, the real grid has unlimited size
-GridWidth = 20  # note that higher values tend to lead to lag when resizing
+GridWidth = 40  # note that higher values tend to lead to lag when resizing
 
 # colour customization of the cells
 AliveCol = "black"
@@ -129,10 +129,6 @@ class SimCell:
 
 # region functions
 
-# updates the displayed version of the grid, takes in the list of the sim cells
-def update_display(grid):
-    pass
-
 
 # main rule algorithm, applies one iteration of the rules to the actual grid
 # takes in the list of the alive cells (classes) and the rule values (globals)
@@ -201,10 +197,6 @@ def tick_rules(sim_cells):
     return sim_cells
 
 
-def button_tick():
-    global SimCells
-    SimCells = tick_rules(SimCells)
-
 # endregion
 
 
@@ -225,6 +217,32 @@ for X in range(GridWidth):
     displayCells.append([])
     for Y in range(GridWidth):
         displayCells[X].append(DisplayCell(X, Y, ((X + Y) % 2 == 0), displayGrid))
+
+
+# updates the displayed version of the grid, takes in the list of the sim cells
+def update_display(sim_cells):
+    global displayCells
+    # list of live cell positions
+    live_pos = []
+    for cell in sim_cells:
+        live_pos.append([cell.x, cell.y])
+    for X in range(GridWidth):
+        for Y in range(GridWidth):
+            cell = displayCells[X][Y]
+            # if the cell has been found in the list of live positions
+            found = False
+            for pos in live_pos:
+                if cell.x == pos[0] and cell.y == pos[1]:
+                    found = True
+            cell.state = found
+            cell.update_colour()
+
+
+def button_tick():
+    global SimCells
+    SimCells = tick_rules(SimCells)
+    update_display(SimCells)
+
 
 # speed slider used for the simulation speed
 SimSpeed = tk.DoubleVar()
@@ -279,17 +297,24 @@ tk.Button(master=timeControl, image=pauseImg).grid(row=0, column=1)
 
 
 # more testing
-def get_grid(event):
-    print("enter pressed")
-    for cell in SimCells:
-        print(cell.x, cell.y)
+#def get_grid(event):
+#    print("enter pressed")
+#    for cell in SimCells:
+#        print(cell.x, cell.y)
 
 
-for i in range(3):
-    SimCells.append(SimCell(i, 0, True))
+#for i in range(3):
+#    SimCells.append(SimCell(i, 0, True))
 
+# glider
+SimCells.append(SimCell(0, 0, True))
+SimCells.append(SimCell(1, 0, True))
+SimCells.append(SimCell(2, 0, True))
+SimCells.append(SimCell(2, -1, True))
+SimCells.append(SimCell(1, -2, True))
 
-window.bind("<Return>", get_grid)
+#window.bind("<Return>", get_grid)
+
 
 # main loop for the simulation
 window.mainloop()
