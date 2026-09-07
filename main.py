@@ -11,6 +11,13 @@ GridWidth = 20  # note that higher values tend to lead to lag when resizing
 # colour customization of the cells
 AliveCol = "black"
 DeadCol = "white"
+# the "actual" grid, stores the cell objects
+MainGrid = []
+# a list of the x and y positions of live cells in the format [x,y] for each item
+LiveCellPos = []
+# a list of x and y positions of dead cells in the format [x,y] for each item.
+# These are positions of dead cells that could become live, but have failed the check already
+CheckedDeadCellPos = []
 
 
 # endregion
@@ -58,10 +65,42 @@ class DisplayCell(tk.Frame):
         else:
             self.configure(bg=DeadCol)
 
+
 # cell class used for the main rule algorithm and calculations
 class SimCell:
-    def __init__(self, x: int, y: int, nextState: bool):
-        pass
+    def __init__(self, x: int, y: int, next_state: bool):
+        self.x = x
+        self.y = y
+        self.nextState = next_state
+
+    # destructor, may print debug message
+    def __del__(self):
+        # debug message
+        print(f"cell at x: {self.x}, y: {self.y} has died")
+
+    # checks the cell's state and calls destructor if dead
+    def update_state(self):
+        # if the cell is dead, destroy itself
+        if not self.nextState:
+            del self
+
+    # checks if a cell at a given position lives to the next generation based on neighbours
+    def check_neighbours(self, x:int, y:int, state:bool) -> bool:
+        # count of the live neighbours found
+        live_neighbours = 0
+        # x offset
+        for a in range(-1, 1, 1):
+            # y offset
+            for b in range(-1, 1, 1):
+                # if statement to avoid checking
+                if not (a == 0 and b == 0):
+                    # checks if the position with the offset exists in the known live cell positions
+                    # If it does the position is alive
+                    if [x+a, y+b] in LiveCellPos:
+                        live_neighbours += 1
+                    else:
+                        # check the dead cell against failed dead cells to see if it could become live
+                        pass
 
 
 
@@ -102,7 +141,6 @@ timeControl.place(in_=displayGrid, relx=0.35, rely=0, y=-50)
 stepImg = tk.PhotoImage(file="stepForward.png")
 playImg = tk.PhotoImage(file="play.png")
 pauseImg = tk.PhotoImage(file="pause.png")
-
 
 # step forward button to update one generation at a time
 tk.Button(master=timeControl, image=stepImg).grid(row=0, column=2)
