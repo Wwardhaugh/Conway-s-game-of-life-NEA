@@ -11,13 +11,14 @@ GridWidth = 20  # note that higher values tend to lead to lag when resizing
 # colour customization of the cells
 AliveCol = "black"
 DeadCol = "white"
-# the "actual" grid, stores the cell objects
-MainGrid = []
-# a list of the x and y positions of live cells in the format [x,y] for each item
-LiveCellPos = []
-# a list of x and y positions of dead cells in the format [x,y] for each item.
-# These are positions of dead cells that could become live, but have failed the check already
-CheckedDeadCellPos = []
+
+# rule values used for simulation
+DeathByUnderpop = 2  # default 2
+DeathByOverpop = 3  # default 3
+ParentsRequired = 3  # default 3
+
+# Main grid for the simulation cells
+SimCells = []
 
 
 # endregion
@@ -68,43 +69,144 @@ class DisplayCell(tk.Frame):
 
 # cell class used for the main rule algorithm and calculations
 class SimCell:
-    def __init__(self, x: int, y: int, next_state: bool):
+    def __init__(self, x: int, y: int, nextState: bool):
         self.x = x
         self.y = y
-        self.nextState = next_state
+        self.nextState = nextState
 
-    # destructor, may print debug message
+    # debug message
     def __del__(self):
-        # debug message
-        print(f"cell at x: {self.x}, y: {self.y} has died")
+        # print(f"cell at {self.x}, {self.y} has died")
+        pass
 
-    # checks the cell's state and calls destructor if dead
     def update_state(self):
-        # if the cell is dead, destroy itself
-        if not self.nextState:
-            del self
+        # if the cell dies, delete itself
+        del self
 
-    # checks if a cell at a given position lives to the next generation based on neighbours
-    def check_neighbours(self, x:int, y:int, state:bool) -> bool:
-        # count of the live neighbours found
+    def get_coords(self):
+        return [self.x, self.y]
+
+    # calculates next state based on neighbours and current rules
+    def find_next_state(self, live_pos):
+        # counts the neighbour's states
+        # if a dead neighbor is found it is added to the list of dead cells
         live_neighbours = 0
-        # x offset
-        for a in range(-1, 1, 1):
-            # y offset
-            for b in range(-1, 1, 1):
-                # if statement to avoid checking
-                if not (a == 0 and b == 0):
-                    # checks if the position with the offset exists in the known live cell positions
-                    # If it does the position is alive
-                    if [x+a, y+b] in LiveCellPos:
+        dead_neighbours = 0
+        dead_neighbours_pos = []
+        for x in [-1, 0, 1]:
+            for y in [-1, 0, 1]:
+                # exclude own position
+                if not (x == 0 and y == 0):
+                    found = False  # if the position has been found live yet
+                    for pos in live_pos:
+                        if pos == [(self.x + x), (self.y + y)]:
+                            found = True
+                    if found:
                         live_neighbours += 1
                     else:
-                        # check the dead cell against failed dead cells to see if it could become live
-                        pass
+                        dead_neighbours += 1
+                        dead_neighbours_pos.append([(self.x + x), (self.y + y)])
+        # compare live neighbours with rules
+        self.nextState = True
+        # death by underpopulation
+        if live_neighbours < DeathByUnderpop:
+            self.nextState = False
+        # death by overpopulation
+        if live_neighbours > DeathByOverpop:
+            self.nextState = False
 
+        # debug
+        # if self.x == 1 and self.y == 1:
+        #    print(f"live neighbours:{live_neighbours}, dead neighbours: {dead_neighbours}")
+        #    print(f"state:{self.nextState}")
+
+        # return dead neighbour positions found
+        return dead_neighbours_pos
 
 
 # endregion
+
+
+# region functions
+
+# updates the displayed version of the grid, takes in the list of the sim cells
+def update_display(grid):
+    pass
+
+
+# main rule algorithm, applies one iteration of the rules to the actual grid
+# takes in the list of the alive cells (classes) and the rule values (globals)
+# also returns the same list of cells when done
+def tick_rules(sim_cells):
+    # list of the live and dead cell positions
+    livePos = []
+    # format for dead cells list: x, y, no. appearances
+    deadCells = []
+    # new dead cells found by a live cell
+    newDeadCells = []
+
+    for cell in sim_cells:
+        livePos.append(cell.get_coords())
+    for cell in sim_cells:
+        newDeadCells = cell.find_next_state(livePos)
+        # add new dead cells to list
+        if deadCells == []:
+            for pos in newDeadCells:
+                deadCells.append([pos[0], pos[1], 1])
+        else:
+            for new_pos in newDeadCells:
+                id = 0
+                # if the position has been found
+                found = False
+                for old_pos in deadCells:
+                    # if the new dead cell already exists, update it's counter
+                    if new_pos == [old_pos[0], old_pos[1]]:
+                        old_counter = old_pos[2]
+                        deadCells[id] = [old_pos[0], old_pos[1], (old_counter + 1)]
+                        found = True
+                    id += 1
+                if not found:
+                    deadCells.append([new_pos[0], new_pos[1], 1])
+
+    # debug
+    # for i in livePos:
+    #    print(i)
+    # print("deadCells")
+    # for i in deadCells:
+    #    print(i)
+    # for cell in sim_cells:
+    #    print("sim cells")
+    #    print(cell.x, cell.y, cell.nextState)
+
+    # update cell states and add in new cells, for some reason this can be weird
+    cellsDeleted = False
+    while not cellsDeleted:
+        for cell in sim_cells:
+            if cell.nextState == False:
+                sim_cells.remove(cell)
+
+        # fixes issue
+        cellsDeleted = True
+        for cell in sim_cells:
+            if not cell.nextState:
+                cellsDeleted = False
+
+    # add new cells
+    for cell in deadCells:
+        if cell[2] == ParentsRequired:
+            sim_cells.append(SimCell(cell[0], cell[1], True))
+
+    # return the new cell list
+
+    return sim_cells
+
+
+def button_tick():
+    global SimCells
+    SimCells = tick_rules(SimCells)
+
+# endregion
+
 
 # region instantiation and widgets
 
@@ -143,7 +245,7 @@ playImg = tk.PhotoImage(file="play.png")
 pauseImg = tk.PhotoImage(file="pause.png")
 
 # step forward button to update one generation at a time
-tk.Button(master=timeControl, image=stepImg).grid(row=0, column=2)
+tk.Button(master=timeControl, image=stepImg, command=button_tick).grid(row=0, column=2)
 
 # play button for starting the simulation
 tk.Button(master=timeControl, image=playImg).grid(row=0, column=0)
@@ -155,15 +257,39 @@ tk.Button(master=timeControl, image=pauseImg).grid(row=0, column=1)
 # endregion
 
 
-# region functions
-
-# updates the displayed version of the grid
-def update_display(grid):
-    pass
 
 
-# endregion
+# test
+#sim_cells = []
+#for i in range(3):
+#    sim_cells.append(SimCell(i, 0, True))
+#for cell in sim_cells:
+#    print(cell.x, cell.y)
+#sim_cells = tick_rules(sim_cells)
+#print("sim")
+#
+#for cell in sim_cells:
+#    print(cell.x, cell.y)
 
+#sim_cells = tick_rules(sim_cells)
+#print("sim")
+
+#for cell in sim_cells:
+#    print(cell.x, cell.y)
+
+
+# more testing
+def get_grid(event):
+    print("enter pressed")
+    for cell in SimCells:
+        print(cell.x, cell.y)
+
+
+for i in range(3):
+    SimCells.append(SimCell(i, 0, True))
+
+
+window.bind("<Return>", get_grid)
 
 # main loop for the simulation
 window.mainloop()
