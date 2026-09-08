@@ -17,6 +17,25 @@ DeathByUnderpop = 2  # default 2
 DeathByOverpop = 3  # default 3
 ParentsRequired = 3  # default 3
 
+# global delay between ticks
+Delay = 500
+
+# boolean for if the simulation is running or not
+Running = True
+
+
+# procedure to pause simulation
+def pause():
+    global Running
+    Running = False
+
+
+# procedure to unpause simulation
+def unpause():
+    global Running
+    Running = True
+
+
 # Main grid for the simulation cells
 SimCells = []
 
@@ -35,13 +54,26 @@ class MainWindow(tk.Tk):
         self.state("zoomed")
 
 
+# if a frame is clicked
+def click_frame(event):
+     print(event.x, event.y)
+     event.state = not event.state
+     event.update_colour()
+
+# procedure for flipping a cell state
+def flip_state(self):
+    self.state = not self.state
+    self.update_colour()
+
+
 # cell used in grid display only, state is bool, True -> alive, False -> dead
-class DisplayCell(tk.Button):
+class DisplayCell(tk.Frame):
     def __init__(self, x: int, y: int, state: bool, master):
         super().__init__(master=master)
         self.x = x
         self.y = y
         self.state = state
+        self.bind("<Button-1>", click_frame)
 
         # used to set the state to dead by default
         if self.state is None:
@@ -66,10 +98,6 @@ class DisplayCell(tk.Button):
         else:
             self.configure(bg=DeadCol)
 
-    # switches the state of the cell
-    def flip_state(self):
-        self.state = not self.state
-        self.update_colour()
 
 
 # cell class used for the main rule algorithm and calculations
@@ -245,9 +273,16 @@ def button_tick():
     update_display(SimCells)
 
 
+# calculate new delay
+def calc_Delay(speed):
+    speed = int(speed)
+    global Delay
+    Delay = 1000 * ((101 - speed)/100)
+
+
 # speed slider used for the simulation speed
 SimSpeed = tk.DoubleVar()
-speedScale = tk.Scale(master=window, orient=tk.HORIZONTAL, label="speed", variable=SimSpeed, from_=0, to=100)
+speedScale = tk.Scale(master=window, orient=tk.HORIZONTAL, label="speed", variable=SimSpeed, from_=1, to=100, command=calc_Delay)
 
 # places the slider underneath the grid
 speedScale.place(in_=displayGrid, relx=0.4, rely=1, y=50)
@@ -267,10 +302,10 @@ pauseImg = tk.PhotoImage(file="pause.png")
 tk.Button(master=timeControl, image=stepImg, command=button_tick).grid(row=0, column=2)
 
 # play button for starting the simulation
-tk.Button(master=timeControl, image=playImg).grid(row=0, column=0)
+tk.Button(master=timeControl, image=playImg, command=unpause).grid(row=0, column=0)
 
 # pause button for stopping the simulation
-tk.Button(master=timeControl, image=pauseImg).grid(row=0, column=1)
+tk.Button(master=timeControl, image=pauseImg, command=pause).grid(row=0, column=1)
 
 
 # endregion
@@ -283,6 +318,18 @@ SimCells.append(SimCell(2, 0, True))
 SimCells.append(SimCell(2, -1, True))
 SimCells.append(SimCell(1, -2, True))
 
+
+# update
+def update():
+    global Delay
+    # print("Update")
+    if Running:
+        button_tick()
+    window.after(int(Delay), update)
+
+
+# continuous updates
+update()
 
 # main loop for the simulation
 window.mainloop()
