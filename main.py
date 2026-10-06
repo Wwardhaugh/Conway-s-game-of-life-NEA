@@ -1,6 +1,7 @@
 # region imports
 import tkinter as tk
 
+
 # endregion
 
 # region globals
@@ -39,6 +40,11 @@ def unpause():
 # Main grid for the simulation cells
 SimCells = []
 
+# new cells added by the user editing the grid, this is wiped each "tick"
+newCells = []
+
+# same as last list, but for cells scheduled to be deleted
+removedCells = []
 
 # endregion
 
@@ -54,16 +60,30 @@ class MainWindow(tk.Tk):
         self.state("zoomed")
 
 
-# if a frame is clicked
+# triggers if a display cell is clicked to update the grid accordingly
 def click_frame(event):
-     print(event.x, event.y)
-     event.state = not event.state
-     event.update_colour()
+    # ony allow the cells to be updated if the simulation is paused
+    if not Running:
+        event.widget.state = not event.widget.state
+        event.widget.update_colour()
+        pos = [event.widget.x, event.widget.y]
+        # if the cell changed to be live
+        if event.widget.state:
+            # if the position was going to be deleted, change it to be added
+            if pos in removedCells:
+                removedCells.remove(pos)
 
-# procedure for flipping a cell state
-def flip_state(self):
-    self.state = not self.state
-    self.update_colour()
+            if pos not in newCells:
+                newCells.append(pos)
+
+        # if the cell changed to be dead
+        else:
+            # if the position was going to be added, change it to be deleted
+            if pos in newCells:
+                newCells.remove(pos)
+
+            if pos not in removedCells:
+                removedCells.append(pos)
 
 
 # cell used in grid display only, state is bool, True -> alive, False -> dead
@@ -86,7 +106,7 @@ class DisplayCell(tk.Frame):
             self.configure(bg=DeadCol)
 
         # set cell size relative to the grid width
-        self.configure(width=400 / GridWidth, height=400 / GridWidth)
+        self.configure(width=(400 / GridWidth), height=(400 / GridWidth))
 
         # set the position in the displayGrid widget
         self.grid(row=self.x, column=self.y)
@@ -97,7 +117,6 @@ class DisplayCell(tk.Frame):
             self.configure(bg=AliveCol)
         else:
             self.configure(bg=DeadCol)
-
 
 
 # cell class used for the main rule algorithm and calculations
@@ -147,7 +166,6 @@ class SimCell:
         # death by overpopulation
         if live_neighbours > DeathByOverpop:
             self.nextState = False
-
 
         # return dead neighbour positions found
         return dead_neighbours_pos
@@ -207,7 +225,7 @@ def tick_rules(sim_cells):
     cellsDeleted = False
     while not cellsDeleted:
         for cell in sim_cells:
-            if cell.nextState == False:
+            if not cell.nextState:
                 sim_cells.remove(cell)
 
         # fixes issue
@@ -267,8 +285,27 @@ def update_display(sim_cells):
             cell.update_colour()
 
 
+# adds and removes cells from user editing the grid
+def update_sim_cells():
+    global SimCells
+    global newCells
+    global removedCells
+
+    # delete removed cells
+    for cell in SimCells:
+        if [cell.x, cell.y] in removedCells:
+            SimCells.remove(cell)
+    removedCells = []
+
+    # add new cells
+    for cell in newCells:
+        SimCells.append(SimCell(cell[0], cell[1], True))
+    newCells = []
+
+
 def button_tick():
     global SimCells
+    update_sim_cells()
     SimCells = tick_rules(SimCells)
     update_display(SimCells)
 
@@ -277,12 +314,13 @@ def button_tick():
 def calc_Delay(speed):
     speed = int(speed)
     global Delay
-    Delay = 1000 * ((101 - speed)/100)
+    Delay = 1000 * ((101 - speed) / 100)
 
 
 # speed slider used for the simulation speed
 SimSpeed = tk.DoubleVar()
-speedScale = tk.Scale(master=window, orient=tk.HORIZONTAL, label="speed", variable=SimSpeed, from_=1, to=100, command=calc_Delay)
+speedScale = tk.Scale(master=window, orient=tk.HORIZONTAL, label="speed", variable=SimSpeed, from_=1, to=100,
+                      command=calc_Delay)
 
 # places the slider underneath the grid
 speedScale.place(in_=displayGrid, relx=0.4, rely=1, y=50)
@@ -306,7 +344,6 @@ tk.Button(master=timeControl, image=playImg, command=unpause).grid(row=0, column
 
 # pause button for stopping the simulation
 tk.Button(master=timeControl, image=pauseImg, command=pause).grid(row=0, column=1)
-
 
 # endregion
 
