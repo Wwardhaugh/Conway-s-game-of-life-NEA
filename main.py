@@ -1,5 +1,6 @@
 # region imports
 import tkinter as tk
+import csv
 
 
 # endregion
@@ -246,6 +247,46 @@ def tick_rules(sim_cells):
     return sim_cells
 
 
+# procedure to reset the grid
+def grid_reset():
+    global SimCells
+    global Running
+    Running = False
+    SimCells = []
+    update_display(SimCells)
+
+
+# exports the current grid state as a csv file
+def export_grid():
+    if not Running:
+        update_sim_cells()
+        liveCells = []
+        for cell in SimCells:
+            liveCells.append([cell.x, cell.y])
+
+        with open("output.csv", 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerows(liveCells)
+
+
+# imports a grid state from a csv, or via a list input
+def import_grid(preset):
+    if not Running:
+        # if there are cells input, then a preset is being loaded
+        if preset is not None:
+            # preset code
+            pass
+        # otherwise import via a csv
+        else:
+            global SimCells
+            grid_reset()
+            with open("output.csv", "r") as f:
+                reader = csv.reader(f)
+                for row in reader:
+                    SimCells.append(SimCell(int(row[0]), int(row[1]), True))
+                    update_display(SimCells)
+
+
 # endregion
 
 
@@ -346,17 +387,6 @@ tk.Button(master=timeControl, image=stepImg, command=button_tick).grid(row=0, co
 tk.Button(master=timeControl, image=playImg, command=unpause).grid(row=0, column=0)
 # pause button for stopping the simulation
 tk.Button(master=timeControl, image=pauseImg, command=pause).grid(row=0, column=1)
-
-
-# procedure to reset the grid
-def grid_reset():
-    global SimCells
-    global Running
-    Running = False
-    SimCells = []
-    update_display(SimCells)
-
-
 # button to reset the grid state
 tk.Button(master=timeControl, text="reset grid", command=grid_reset).grid(row=0, column=3)
 
@@ -404,6 +434,18 @@ reqPar = tk.Spinbox(master=rulesWidget, from_=1, to=8, command=rule_update, repe
                     textvariable=initPar)
 reqPar.grid(row=2, column=1)
 
+
+# widget for the import and export buttons
+importExport = tk.Frame()
+importExport.columnconfigure(2)
+importExport.rowconfigure(0)
+importExport.place(in_=rulesWidget, relx=0.5, rely=0, y=-60)
+
+# import button
+tk.Button(master=importExport, text="Import grid", command=lambda :import_grid(None)).grid(row=0, column=0)
+
+# export button
+tk.Button(master=importExport, text="Export grid", command=export_grid).grid(row=0, column=1)
 
 # endregion
 
