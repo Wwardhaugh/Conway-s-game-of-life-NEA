@@ -13,6 +13,7 @@ GridWidth = 40  # note that higher values tend to lead to lag when resizing
 AliveCol = "black"
 DeadCol = "white"
 
+
 # rule values used for simulation
 DeathByUnderpop = 2  # default 2
 DeathByOverpop = 3  # default 3
@@ -49,6 +50,7 @@ removedCells = []
 # endregion
 
 # region classes
+
 
 # main window
 class MainWindow(tk.Tk):
@@ -106,7 +108,8 @@ class DisplayCell(tk.Frame):
             self.configure(bg=DeadCol)
 
         # set cell size relative to the grid width
-        self.configure(width=(400 / GridWidth), height=(400 / GridWidth))
+        self.configure(width=(400 / GridWidth), height=(400 / GridWidth), highlightbackground="gray",
+                       highlightthickness=0.5)
 
         # set the position in the displayGrid widget
         self.grid(row=self.x, column=self.y)
@@ -186,14 +189,13 @@ def tick_rules(sim_cells):
     # format for dead cells list: x, y, no. appearances
     deadCells = []
     # new dead cells found by a live cell
-    newDeadCells = []
 
     for cell in sim_cells:
         livePos.append(cell.get_coords())
     for cell in sim_cells:
         newDeadCells = cell.find_next_state(livePos)
         # add new dead cells to list
-        if deadCells == []:
+        if not deadCells: # if list is empty
             for pos in newDeadCells:
                 deadCells.append([pos[0], pos[1], 1])
         else:
@@ -325,25 +327,83 @@ speedScale = tk.Scale(master=window, orient=tk.HORIZONTAL, label="speed", variab
 # places the slider underneath the grid
 speedScale.place(in_=displayGrid, relx=0.4, rely=1, y=50)
 
-# time control widgets to contain the start, stop, and step forward buttons
-timeControl = tk.Frame(width=100, height=5, )
-timeControl.rowconfigure(0)
-timeControl.columnconfigure(3)
-timeControl.place(in_=displayGrid, relx=0.35, rely=0, y=-50)
-
 # Images
 stepImg = tk.PhotoImage(file="stepForward.png")
 playImg = tk.PhotoImage(file="play.png")
 pauseImg = tk.PhotoImage(file="pause.png")
+
+
+# time control widgets to contain the start, stop, and step forward buttons
+timeControl = tk.Frame(width=100, height=5, )
+timeControl.rowconfigure(0)
+timeControl.columnconfigure(4)
+timeControl.place(in_=displayGrid, relx=0.35, rely=0, y=-50)
 
 # step forward button to update one generation at a time
 tk.Button(master=timeControl, image=stepImg, command=button_tick).grid(row=0, column=2)
 
 # play button for starting the simulation
 tk.Button(master=timeControl, image=playImg, command=unpause).grid(row=0, column=0)
-
 # pause button for stopping the simulation
 tk.Button(master=timeControl, image=pauseImg, command=pause).grid(row=0, column=1)
+
+
+# procedure to reset the grid
+def grid_reset():
+    global SimCells
+    global Running
+    Running = False
+    SimCells = []
+    update_display(SimCells)
+
+
+# button to reset the grid state
+tk.Button(master=timeControl, text="reset grid", command=grid_reset).grid(row=0, column=3)
+
+
+# function for updating rule values, takes in the widget that updated
+def rule_update():
+    if not Running:
+        global DeathByUnderpop
+        global DeathByOverpop
+        global ParentsRequired
+        DeathByUnderpop = int(minPar.get())
+        DeathByOverpop = int(maxPar.get())
+        ParentsRequired = int(reqPar.get())
+
+
+# widget for the rules
+rulesWidget = tk.Frame(width=20, height=100)
+rulesWidget.columnconfigure(1)
+rulesWidget.rowconfigure(3)
+rulesWidget.pack(side=tk.LEFT, padx=100)
+
+# variables to set default values of the spin boxes
+initUnderpop = tk.StringVar(window)
+initUnderpop.set(2)
+initOverpop = tk.StringVar(window)
+initOverpop.set(3)
+initPar = tk.StringVar(window)
+initPar.set(3)
+
+tk.Label(master=rulesWidget, text="Minimum neighbours").grid(row=0, column=0)
+
+minPar = tk.Spinbox(master=rulesWidget, from_=1, to=8, command=rule_update, repeatdelay=500, repeatinterval=100,
+                    textvariable=initUnderpop)
+minPar.grid(row=0, column=1)
+
+tk.Label(master=rulesWidget, text="Maximum neighbours").grid(row=1, column=0)
+
+maxPar = tk.Spinbox(master=rulesWidget, from_=1, to=8, command=rule_update, repeatdelay=500, repeatinterval=100,
+                    textvariable=initOverpop)
+maxPar.grid(row=1, column=1)
+
+tk.Label(master=rulesWidget, text="Required parents").grid(row=2, column=0)
+
+reqPar = tk.Spinbox(master=rulesWidget, from_=1, to=8, command=rule_update, repeatdelay=500, repeatinterval=100,
+                    textvariable=initPar)
+reqPar.grid(row=2, column=1)
+
 
 # endregion
 
