@@ -447,6 +447,16 @@ tk.Button(master=importExport, text="Import grid", command=lambda :import_grid(N
 # export button
 tk.Button(master=importExport, text="Export grid", command=export_grid).grid(row=0, column=1)
 
+
+# dropdown for the preset selection
+presetLabel = tk.Label(text="Presets:")
+presetLabel.place(in_=importExport, x=200)
+
+presetListbox = tk.Listbox()
+presetListbox.place(in_=presetLabel, relx=0, y=40)
+
+
+
 # endregion
 
 
