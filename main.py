@@ -24,7 +24,7 @@ ParentsRequired = 3  # default 3
 Delay = 500
 
 # boolean for if the simulation is running or not
-Running = True
+Running = False
 
 
 # procedure to pause simulation
@@ -47,6 +47,12 @@ newCells = []
 
 # same as last list, but for cells scheduled to be deleted
 removedCells = []
+
+# Dictionary for the presets of the simulation, in the form PresetName: 2d list of live cell coords
+PresetsDict = {
+    "glider": [[18,18],[17,19],[18,19],[19,18],[18,17],[18,18],[18,19],[17,19],[16,18],],
+    "blinker": [[14,16],[13,16],[15,16]],
+               }
 
 # endregion
 
@@ -271,20 +277,24 @@ def export_grid():
 
 # imports a grid state from a csv, or via a list input
 def import_grid(preset):
+    global SimCells
     if not Running:
         # if there are cells input, then a preset is being loaded
         if preset is not None:
-            # preset code
-            pass
+            grid_reset()
+            # fetch the coords of live cells from preset dictionary
+            liveCells = PresetsDict.get(preset)
+            for cell in liveCells:
+                SimCells.append(SimCell(cell[0], cell[1], True))
+            update_display(SimCells)
         # otherwise import via a csv
         else:
-            global SimCells
             grid_reset()
             with open("output.csv", "r") as f:
                 reader = csv.reader(f)
                 for row in reader:
                     SimCells.append(SimCell(int(row[0]), int(row[1]), True))
-                    update_display(SimCells)
+                update_display(SimCells)
 
 
 # endregion
@@ -306,7 +316,7 @@ displayCells = []
 for X in range(GridWidth):
     displayCells.append([])
     for Y in range(GridWidth):
-        displayCells[X].append(DisplayCell(X, Y, ((X + Y) % 2 == 0), displayGrid))
+        displayCells[X].append(DisplayCell(X, Y, False, displayGrid))
 
 
 # updates the displayed version of the grid, takes in the list of the sim cells
@@ -442,30 +452,31 @@ importExport.rowconfigure(0)
 importExport.place(in_=rulesWidget, relx=0.5, rely=0, y=-60)
 
 # import button
-tk.Button(master=importExport, text="Import grid", command=lambda :import_grid(None)).grid(row=0, column=0)
+tk.Button(master=importExport, text="Import grid", command=lambda: import_grid(None)).grid(row=0, column=0)
 
 # export button
 tk.Button(master=importExport, text="Export grid", command=export_grid).grid(row=0, column=1)
 
 
+# listbox function
+def preset_update(event):
+    preset = presetListbox.get(presetListbox.curselection())
+    import_grid(preset)
+
+
 # dropdown for the preset selection
 presetLabel = tk.Label(text="Presets:")
 presetLabel.place(in_=importExport, x=200)
-
-presetListbox = tk.Listbox()
+presetListbox = tk.Listbox(selectmode=tk.SINGLE)
 presetListbox.place(in_=presetLabel, relx=0, y=40)
+presetListbox.bind('<<ListboxSelect>>', preset_update)
 
+# insert the names for the presets in the presets dictionary
+for key in PresetsDict.keys():
+    presetListbox.insert(tk.END, str(key))
 
 
 # endregion
-
-
-# glider
-SimCells.append(SimCell(0, 0, True))
-SimCells.append(SimCell(1, 0, True))
-SimCells.append(SimCell(2, 0, True))
-SimCells.append(SimCell(2, -1, True))
-SimCells.append(SimCell(1, -2, True))
 
 
 # update
