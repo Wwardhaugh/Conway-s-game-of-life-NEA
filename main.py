@@ -2,7 +2,6 @@
 import tkinter as tk
 import csv
 
-
 # endregion
 
 # region globals
@@ -13,7 +12,6 @@ GridWidth = 40  # note that higher values tend to lead to lag when resizing
 # colour customization of the cells
 AliveCol = "black"
 DeadCol = "white"
-
 
 # rule values used for simulation
 DeathByUnderpop = 2  # default 2
@@ -50,9 +48,35 @@ removedCells = []
 
 # Dictionary for the presets of the simulation, in the form PresetName: 2d list of live cell coords
 PresetsDict = {
-    "glider": [[18,18],[17,19],[18,19],[19,18],[18,17],[18,18],[18,19],[17,19],[16,18],],
-    "blinker": [[14,16],[13,16],[15,16]],
-               }
+    "Glider": [[18, 18], [17, 19], [18, 19], [18, 17], [16, 18]],
+    "Blinker": [[14, 16], [13, 16], [15, 16]],
+    "Block": [[16, 18], [16, 19], [17, 19], [17, 18]],
+    "Pentadecathlon": [[10, 19], [11, 19], [12, 18], [12, 20], [13, 19], [14, 19], [15, 19], [16, 19], [17, 18],
+                       [17, 20], [18, 19], [19, 19]],
+    "Gosper Glider Gun": [[8, 2], [8, 3], [9, 3], [9, 2], [8, 12], [9, 12], [10, 12], [7, 13], [11, 13], [12, 14],
+                          [12, 15], [6, 14], [6, 15], [9, 16], [9, 18], [8, 18], [10, 18], [11, 17], [7, 17], [9, 19],
+                          [8, 22], [8, 23], [7, 23], [7, 22], [6, 22], [6, 23], [5, 24], [9, 24], [9, 26], [10, 26],
+                          [5, 26], [4, 26], [6, 36], [6, 37], [7, 37], [7, 36]],
+    "Die Hard": [[20, 16], [19, 16], [19, 15], [20, 20], [20, 21], [20, 22], [18, 21]],
+    "Big Glider": [[35, 29], [34, 28], [34, 30], [34, 31], [35, 32], [34, 32], [33, 32], [33, 33], [32, 32], [32, 31],
+                   [32, 34], [31, 34], [31, 33], [30, 33], [31, 35], [31, 36], [30, 35], [29, 35], [28, 36], [27, 35],
+                   [31, 29], [31, 28], [30, 28], [30, 29], [32, 27], [31, 26], [30, 26], [30, 27], [29, 27], [28, 26],
+                   [28, 24], [27, 24], [28, 23], [27, 22], [25, 23], [24, 21], [24, 20], [25, 20], [26, 20], [23, 19],
+                   [22, 19], [21, 19], [21, 20], [22, 21], [20, 23], [19, 22], [18, 22], [18, 23], [18, 24], [19, 25],
+                   [20, 25], [19, 26], [19, 27], [22, 26], [22, 29], [21, 28], [23, 28], [23, 29], [25, 29], [26, 30],
+                   [26, 31], [25, 31], [25, 32], [26, 33], [27, 32], [27, 31], [28, 31], [28, 32]],
+    "Backrake": [[37, 17], [37, 19], [36, 20], [35, 20], [34, 20], [33, 20], [32, 20], [31, 20], [31, 19], [31, 18],
+                 [32, 17], [35, 16], [34, 16], [30, 15], [31, 13], [31, 11], [30, 11], [29, 11], [29, 12], [29, 13],
+                 [32, 25], [32, 26], [30, 25], [29, 25], [29, 24], [29, 23], [27, 22], [27, 21], [27, 19], [28, 19],
+                 [26, 19], [25, 19], [24, 19], [24, 20], [28, 17], [27, 17], [26, 17], [25, 17], [24, 17], [24, 16],
+                 [27, 15], [27, 14], [25, 14], [24, 14], [23, 14], [22, 14], [23, 15], [21, 13], [20, 12], [20, 11],
+                 [20, 10], [21, 9], [22, 9], [23, 9], [24, 9], [25, 10], [23, 11], [23, 12], [22, 8], [23, 7], [24, 7],
+                 [24, 6], [25, 5], [27, 5], [27, 6], [23, 21], [23, 22], [22, 22], [24, 22], [25, 22], [21, 23],
+                 [20, 24], [20, 25], [20, 26], [21, 27], [22, 27], [23, 27], [24, 27], [25, 26], [23, 25], [23, 24],
+                 [22, 28], [23, 29], [24, 29], [24, 30], [25, 31], [27, 31], [27, 30]],
+
+}
+
 
 # endregion
 
@@ -202,7 +226,7 @@ def tick_rules(sim_cells):
     for cell in sim_cells:
         newDeadCells = cell.find_next_state(livePos)
         # add new dead cells to list
-        if not deadCells: # if list is empty
+        if not deadCells:  # if list is empty
             for pos in newDeadCells:
                 deadCells.append([pos[0], pos[1], 1])
         else:
@@ -271,6 +295,7 @@ def export_grid():
             liveCells.append([cell.x, cell.y])
 
         with open("output.csv", 'w', newline='') as f:
+            f.truncate()
             writer = csv.writer(f)
             writer.writerows(liveCells)
 
@@ -383,7 +408,6 @@ stepImg = tk.PhotoImage(file="stepForward.png")
 playImg = tk.PhotoImage(file="play.png")
 pauseImg = tk.PhotoImage(file="pause.png")
 
-
 # time control widgets to contain the start, stop, and step forward buttons
 timeControl = tk.Frame(width=100, height=5, )
 timeControl.rowconfigure(0)
@@ -443,7 +467,6 @@ tk.Label(master=rulesWidget, text="Required parents").grid(row=2, column=0)
 reqPar = tk.Spinbox(master=rulesWidget, from_=1, to=8, command=rule_update, repeatdelay=500, repeatinterval=100,
                     textvariable=initPar)
 reqPar.grid(row=2, column=1)
-
 
 # widget for the import and export buttons
 importExport = tk.Frame()
